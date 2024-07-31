@@ -27,27 +27,38 @@ var atlas = {"void_cell": Vector2i(0, 0), "static_cell": Vector2i(1, 0), "water_
 "fire_cell": Vector2i(0, 1), "smoke_cell": Vector2i(1, 1), "venom_cell": Vector2i(2, 1), "swamp_cell": Vector2i(3, 1),
 "dirt_cell": Vector2i(0, 2), "clay_cell": Vector2i(1, 2), "sand_cell": Vector2i(2, 2), "magma_cell": Vector2i(3, 2),
 "ice_cell": Vector2i(0, 3), "acid_cell": Vector2i(1, 3), "flame_cell": Vector2i(2, 3), "deep_cell": Vector2i(3, 3)}
-var temp_field = []
+var field = [] # Игровое поле
+var input_cell = atlas["static_cell"] # Цвет клетки, рисуемой пользователем
 ## Ширина мира игры
-@export var width: int = 50
+@export var width: int = 200
 ## Высота мира игры
-@export var height: int = 50
+@export var height: int = 200
 
 func _process(delta: float) -> void:
-	draw_state(delta)
+	pass
 
 
 func _ready() -> void:
 	generate_field()
-	next_state()
+	draw_state()
+
 	
 func _input(event):
 	if event.is_action_pressed("left click"):
 		var pos = (get_local_mouse_position()).floor()
 		# Так как мы работаем с массивом, то меняем значения в нём
 		if pos.x <= width and pos.y <=height:
-			#temp_field[pos.x][pos.y] = atlas.get("ice_cell")
-			temp_field[pos.x][pos.y] = atlas["ice_cell"]
+			field[pos.x][pos.y] = input_cell
+			draw_state()
+	
+	if event.is_action_pressed("1"):
+		input_cell = atlas["static_cell"]
+	if event.is_action_pressed("2"):
+		input_cell = atlas["void_cell"]
+			
+	if event.is_action_pressed("right click"):
+		elementary_cell_automata()
+		draw_state()
 			
 
 func generate_field():
@@ -55,20 +66,67 @@ func generate_field():
 	for x in range(width):
 		temp_line = []
 		for y in range(height):
-			tile_map_layer.set_cell(Vector2i(x, y), 0, atlas["ice_cell"])
-			temp_line.append(atlas["ice_cell"])
-		temp_field.append(temp_line)
+			tile_map_layer.set_cell(Vector2i(x, y), 0, Vector2i(0, 0))
+			temp_line.append(Vector2i(0, 0))
+		field.append(temp_line)
 	
 
 # Отрисовываем поле каждый раз, когда оно изменилось
-func draw_state(_delta):
+func draw_state():
 	for x in range(width):
 		for y in range(height):
-			tile_map_layer.set_cell(Vector2i(x, y), 0, temp_field[x][y])
+			tile_map_layer.set_cell(Vector2i(x, y), 0, field[x][y])
 
 
-# Важно отделить логику конечного автомата от его отрисовки, чтобы я мог
-# Спокойно попробовать разные методы.
-# Это означает, что я запрашиваю информацию с массива, а не к примеру из карты тайлов
+ # Важно отделить логику конечного автомата от его отрисовки, чтобы я мог
+ # Спокойно попробовать разные методы.
+ # Это означает, что я запрашиваю информацию с массива, а не к примеру из карты тайлов
 func next_state():
-	pass
+	## За раз надо изменять только одно состояние поля 
+	# Соседние ячейки клетки
+	var left
+	var right
+	var up
+	var down
+	# Буфер, что используется для расчета состояний клеток
+	var temp_field = field.duplicate()
+	#TODO Пока что не буду рассматривать края, они будут статичными, но в будущем надо придумать, как их обрабатывать
+	for x in range(1, width-1):
+		for y in range(1, height-1):
+			left = temp_field[x-1][y]
+			right = temp_field[x+1][y]
+			up = temp_field[x][y+1]
+			down = temp_field[x][y-1]
+
+# ------------------------------------------------------------------------------
+
+func elementary_cell_automata():
+	## Одномерный простой клеточный автомат, где y - это изменение состояние во времени
+	# За раз надо изменять только одно состояние поля, 
+	#используются только два состояния (0, 0), (1, 0)
+	var cell
+	# Соседние ячейки клетки
+	var left
+	var right
+	var res
+	# Здесь не требуется буффер, т.к. исходная строка не меняется
+	for y in range(height-1):
+		for x in range(1, width-1):
+			left = field[x-1][y]
+			right = field[x+1][y]
+			cell = field[x][y]
+			# Помещаем значение в новую строку
+			res = elementary_cell_automata_next_state(left.x, cell.x, right.x)
+			field[x][y+1] = Vector2i(res, 0)
+			
+func elementary_cell_automata_next_state(a, b, c) -> float:
+#	2^3=8 состояний для проверки
+	if a == 1 and b == 1 and c == 1: return 1 
+	if a == 1 and b == 1 and c == 0: return 0 
+	if a == 0 and b == 0 and c == 1: return 1 
+	if a == 1 and b == 0 and c == 0: return 1 
+	if a == 0 and b == 1 and c == 1: return 0 
+	if a == 0 and b == 1 and c == 0: return 1 
+	if a == 0 and b == 0 and c == 1: return 1 
+	if a == 0 and b == 0 and c == 0: return 0 
+	else: return 0
