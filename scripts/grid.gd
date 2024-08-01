@@ -102,7 +102,7 @@ func next_state():
 			down = temp_field[x][y-1]
 
 # ------------------------------------------------------------------------------
-var rule_num := 246
+var rule_num := 186
 var rule_binary = []
 
 
@@ -130,7 +130,10 @@ func elementary_cell_automata():
 			cell = field[x][y]
 			# Помещаем значение в новую строку
 			field[x][y+1] = Vector2i(elementary_cell_automata_next_state(left.x, cell.x, right.x), 0)
-
+		# Для краёв
+		field[0][y+1] = Vector2i(elementary_cell_automata_next_state(field[width-1][y].x, field[0][y].x, field[1][y].x), 0)
+		field[width-1][y+1] = Vector2i(elementary_cell_automata_next_state(field[width-2][y].x, field[width-1][y].x, field[0][y].x), 0)
+		
 
 func elementary_cell_automata_next_state(a, b, c) -> float:
 #	2^3=8 состояний для проверки
