@@ -23,6 +23,7 @@ extends Node2D
 (2, 3) - пламя
 (3, 3) - синева
 """
+
 var atlas = {"void_cell": Vector2i(0, 0), "static_cell": Vector2i(1, 0), "water_cell": Vector2i(2, 0), "rock_cell": Vector2i(3, 0),
 "fire_cell": Vector2i(0, 1), "smoke_cell": Vector2i(1, 1), "venom_cell": Vector2i(2, 1), "swamp_cell": Vector2i(3, 1),
 "dirt_cell": Vector2i(0, 2), "clay_cell": Vector2i(1, 2), "sand_cell": Vector2i(2, 2), "magma_cell": Vector2i(3, 2),
@@ -54,6 +55,8 @@ func _input(event):
 	if event.is_action_pressed("1"):
 		input_cell = atlas["static_cell"]
 	if event.is_action_pressed("2"):
+		input_cell = atlas["void_cell"]
+	if event.is_action_pressed("3"):
 		input_cell = atlas["void_cell"]
 			
 	if event.is_action_pressed("right click"):
@@ -99,8 +102,19 @@ func next_state():
 			down = temp_field[x][y-1]
 
 # ------------------------------------------------------------------------------
+var rule_num := 246
+var rule_binary = []
+
 
 func elementary_cell_automata():
+	var binary_string := String.num_uint64(rule_num, 2)
+	binary_string = binary_string.lpad(8, "0")
+	print(binary_string)
+	rule_binary = []
+# Split the string into an array of individual characters
+	for i in binary_string:
+		rule_binary.append(int(i))
+	print(rule_binary)
 	## Одномерный простой клеточный автомат, где y - это изменение состояние во времени
 	# За раз надо изменять только одно состояние поля, 
 	#используются только два состояния (0, 0), (1, 0)
@@ -108,7 +122,6 @@ func elementary_cell_automata():
 	# Соседние ячейки клетки
 	var left
 	var right
-	var res
 	# Здесь не требуется буффер, т.к. исходная строка не меняется
 	for y in range(height-1):
 		for x in range(1, width-1):
@@ -116,17 +129,17 @@ func elementary_cell_automata():
 			right = field[x+1][y]
 			cell = field[x][y]
 			# Помещаем значение в новую строку
-			res = elementary_cell_automata_next_state(left.x, cell.x, right.x)
-			field[x][y+1] = Vector2i(res, 0)
-			
+			field[x][y+1] = Vector2i(elementary_cell_automata_next_state(left.x, cell.x, right.x), 0)
+
+
 func elementary_cell_automata_next_state(a, b, c) -> float:
 #	2^3=8 состояний для проверки
-	if a == 1 and b == 1 and c == 1: return 1 
-	if a == 1 and b == 1 and c == 0: return 0 
-	if a == 0 and b == 0 and c == 1: return 1 
-	if a == 1 and b == 0 and c == 0: return 1 
-	if a == 0 and b == 1 and c == 1: return 0 
-	if a == 0 and b == 1 and c == 0: return 1 
-	if a == 0 and b == 0 and c == 1: return 1 
-	if a == 0 and b == 0 and c == 0: return 0 
+	if a == 1 and b == 1 and c == 1: return rule_binary[0] 
+	if a == 1 and b == 1 and c == 0: return rule_binary[1] 
+	if a == 0 and b == 0 and c == 1: return rule_binary[2] 
+	if a == 1 and b == 0 and c == 0: return rule_binary[3] 
+	if a == 0 and b == 1 and c == 1: return rule_binary[4] 
+	if a == 0 and b == 1 and c == 0: return rule_binary[5] 
+	if a == 0 and b == 0 and c == 1: return rule_binary[6] 
+	if a == 0 and b == 0 and c == 0: return rule_binary[7] 
 	else: return 0
