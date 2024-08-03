@@ -2,6 +2,8 @@ class_name Grid
 
 extends Node2D
 
+@onready var label: Label = $Control/Label
+@onready var timer: Timer = $Timer
 @onready var tile_map_layer: TileMapLayer = $TileMapLayer
 """Структура атласа
 На деле имена пока не важны, я собираюсь придать каждому пикселю свою логику
@@ -28,8 +30,12 @@ var atlas = {"void_cell": Vector2i(0, 0), "static_cell": Vector2i(1, 0), "water_
 "fire_cell": Vector2i(0, 1), "smoke_cell": Vector2i(1, 1), "venom_cell": Vector2i(2, 1), "swamp_cell": Vector2i(3, 1),
 "dirt_cell": Vector2i(0, 2), "clay_cell": Vector2i(1, 2), "sand_cell": Vector2i(2, 2), "magma_cell": Vector2i(3, 2),
 "ice_cell": Vector2i(0, 3), "acid_cell": Vector2i(1, 3), "flame_cell": Vector2i(2, 3), "deep_cell": Vector2i(3, 3)}
+var atlas_keys = []
 var field = [] # Игровое поле
-var input_cell = atlas["static_cell"] # Цвет клетки, рисуемой пользователем
+var input_iter: int = 0 # Номер ключа в атласе. Цвет выбираемый пользователем.
+var atlas_size = 15
+var rule_num : int = 1 # Номер правила для 1D клеточного автомата
+
 ## Ширина мира игры
 @export var width: int = 200
 ## Высота мира игры
@@ -49,22 +55,30 @@ func _input(event):
 		var pos = (get_local_mouse_position()).floor()
 		# Так как мы работаем с массивом, то меняем значения в нём
 		if pos.x <= width and pos.y <=height:
-			field[pos.x][pos.y] = input_cell
+			field[pos.x][pos.y] = atlas[atlas_keys[input_iter]]
 			draw_state()
 	
 	if event.is_action_pressed("1"):
-		input_cell = atlas["static_cell"]
+		input_iter = clamp(input_iter-1, 0, atlas_size)
 	if event.is_action_pressed("2"):
-		input_cell = atlas["void_cell"]
+		input_iter = clamp(input_iter+1, 0, atlas_size)
 	if event.is_action_pressed("3"):
-		input_cell = atlas["void_cell"]
+		rule_num = clamp(rule_num-1, 0, 255)
+	if event.is_action_pressed("4"):
+		rule_num = clamp(rule_num+1, 0, 255)
 			
 	if event.is_action_pressed("right click"):
-		elementary_cell_automata()
-		draw_state()
+		#elementary_cell_automata()
+		#draw_state()
+		timer.start()
 			
 
 func generate_field():
+
+	for keys in atlas.keys():
+		atlas_keys.append(keys)
+	print(atlas_keys)
+	
 	var temp_line
 	for x in range(width):
 		temp_line = []
@@ -102,19 +116,19 @@ func next_state():
 			down = temp_field[x][y-1]
 
 # ------------------------------------------------------------------------------
-var rule_num := 186
-var rule_binary = []
+
+
 
 
 func elementary_cell_automata():
-	var binary_string := String.num_uint64(rule_num, 2)
-	binary_string = binary_string.lpad(8, "0")
-	print(binary_string)
-	rule_binary = []
+	var binary_string := String.num_uint64(rule_num, 2).lpad(8, "0")
+	var rule_binary = []
 # Split the string into an array of individual characters
 	for i in binary_string:
 		rule_binary.append(int(i))
-	print(rule_binary)
+	label.text = "правило № %s" % [rule_num]
+	#print(rule_num, " ", binary_string)
+	#print(rule_binary)
 	## Одномерный простой клеточный автомат, где y - это изменение состояние во времени
 	# За раз надо изменять только одно состояние поля, 
 	#используются только два состояния (0, 0), (1, 0)
@@ -129,13 +143,13 @@ func elementary_cell_automata():
 			right = field[x+1][y]
 			cell = field[x][y]
 			# Помещаем значение в новую строку
-			field[x][y+1] = Vector2i(elementary_cell_automata_next_state(left.x, cell.x, right.x), 0)
+			field[x][y+1] = Vector2i(elementary_cell_automata_next_state(left.x, cell.x, right.x, rule_binary), 0)
 		# Для краёв
-		field[0][y+1] = Vector2i(elementary_cell_automata_next_state(field[width-1][y].x, field[0][y].x, field[1][y].x), 0)
-		field[width-1][y+1] = Vector2i(elementary_cell_automata_next_state(field[width-2][y].x, field[width-1][y].x, field[0][y].x), 0)
+		field[0][y+1] = Vector2i(elementary_cell_automata_next_state(field[width-1][y].x, field[0][y].x, field[1][y].x, rule_binary), 0)
+		field[width-1][y+1] = Vector2i(elementary_cell_automata_next_state(field[width-2][y].x, field[width-1][y].x, field[0][y].x, rule_binary), 0)
 		
 
-func elementary_cell_automata_next_state(a, b, c) -> float:
+func elementary_cell_automata_next_state(a, b, c, rule_binary) -> int:
 #	2^3=8 состояний для проверки
 	if a == 1 and b == 1 and c == 1: return rule_binary[0] 
 	if a == 1 and b == 1 and c == 0: return rule_binary[1] 
@@ -146,3 +160,9 @@ func elementary_cell_automata_next_state(a, b, c) -> float:
 	if a == 0 and b == 0 and c == 1: return rule_binary[6] 
 	if a == 0 and b == 0 and c == 0: return rule_binary[7] 
 	else: return 0
+
+
+func _on_timer_timeout() -> void:
+	rule_num = clamp(rule_num+1, 0, 255)
+	elementary_cell_automata()
+	draw_state()

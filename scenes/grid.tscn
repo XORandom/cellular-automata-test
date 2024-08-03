@@ -34,6 +34,31 @@ script = ExtResource("1_s37ds")
 tile_set = SubResource("TileSet_m883d")
 
 [node name="Camera2D" type="Camera2D" parent="."]
-position = Vector2(14, 3)
-zoom = Vector2(20, 20)
+position = Vector2(581, 330)
 script = ExtResource("1_oc5j5")
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 242.0
+offset_top = 14.0
+offset_right = 319.0
+offset_bottom = 57.0
+
+[node name="Label" type="Label" parent="Control"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = -3.07792
+anchor_top = -1.2093
+anchor_right = 2.07725
+anchor_bottom = -0.490552
+offset_right = -97.9483
+offset_bottom = -7.90625
+text = "правило № 1"
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="Timer" type="Timer" parent="."]
+wait_time = 0.4
+
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
