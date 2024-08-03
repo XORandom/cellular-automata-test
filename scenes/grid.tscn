@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://2610xeh25hfw"]
+[gd_scene load_steps=7 format=3 uid="uid://2610xeh25hfw"]
 
 [ext_resource type="Script" path="res://scripts/camera.gd" id="1_oc5j5"]
 [ext_resource type="Script" path="res://scripts/grid.gd" id="1_s37ds"]
 [ext_resource type="Texture2D" uid="uid://bmd43smy8c5wj" path="res://assets/cell-sheet-export.png" id="2_sgmmk"]
+[ext_resource type="Script" path="res://scripts/rule_v_1.gd" id="4_t2kpu"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hqx17"]
 texture = ExtResource("2_sgmmk")
@@ -22,6 +23,7 @@ texture_region_size = Vector2i(1, 1)
 0:3/0 = 0
 1:3/0 = 0
 3:3/0 = 0
+2:3/0 = 0
 
 [sub_resource type="TileSet" id="TileSet_m883d"]
 tile_size = Vector2i(1, 1)
@@ -31,6 +33,22 @@ sources/0 = SubResource("TileSetAtlasSource_hqx17")
 script = ExtResource("1_s37ds")
 
 [node name="TileMapLayer" type="TileMapLayer" parent="."]
+editor_description = "	(0, 0) - пустота
+	(1, 0) - статичная клетка
+	(2, 0) - вода
+	(3, 0) - камень
+	(0, 1) - огонь
+	(1, 1) - дым
+	(2, 1) - яд
+	(3, 1) - болото
+	(0, 2) - земля
+	(1, 2) - глина
+	(2, 2) - песок
+	(3, 2) - магма
+	(0, 3) - лед
+	(1, 3) - кислота
+	(2, 3) - пламя
+	(3, 3) - синева"
 tile_set = SubResource("TileSet_m883d")
 
 [node name="Camera2D" type="Camera2D" parent="."]
@@ -60,5 +78,8 @@ metadata/_edit_use_anchors_ = true
 
 [node name="Timer" type="Timer" parent="."]
 wait_time = 0.4
+
+[node name="Rule_v1" type="Node" parent="."]
+script = ExtResource("4_t2kpu")
 
 [connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
