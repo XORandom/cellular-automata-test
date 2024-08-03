@@ -1,9 +1,11 @@
-[gd_scene load_steps=7 format=3 uid="uid://2610xeh25hfw"]
+[gd_scene load_steps=9 format=3 uid="uid://2610xeh25hfw"]
 
 [ext_resource type="Script" path="res://scripts/camera.gd" id="1_oc5j5"]
 [ext_resource type="Script" path="res://scripts/grid.gd" id="1_s37ds"]
 [ext_resource type="Texture2D" uid="uid://bmd43smy8c5wj" path="res://assets/cell-sheet-export.png" id="2_sgmmk"]
-[ext_resource type="Script" path="res://scripts/rule_v_1.gd" id="4_t2kpu"]
+[ext_resource type="Script" path="res://scripts/ca_2d_v_1.gd" id="4_t2kpu"]
+[ext_resource type="Script" path="res://scripts/ca_1d_wolfram.gd" id="6_lobmd"]
+[ext_resource type="Script" path="res://scripts/ca_2d_v_2.gd" id="7_rfm3e"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hqx17"]
 texture = ExtResource("2_sgmmk")
@@ -79,7 +81,13 @@ metadata/_edit_use_anchors_ = true
 [node name="Timer" type="Timer" parent="."]
 wait_time = 0.4
 
-[node name="Rule_v1" type="Node" parent="."]
+[node name="CA_1D_Wolfram" type="Node" parent="."]
+script = ExtResource("6_lobmd")
+
+[node name="CA_2D_v1" type="Node" parent="."]
 script = ExtResource("4_t2kpu")
+
+[node name="CA_2D_v2" type="Node" parent="."]
+script = ExtResource("7_rfm3e")
 
 [connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

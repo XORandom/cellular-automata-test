@@ -5,7 +5,9 @@ extends Node2D
 @onready var label: Label = $Control/Label
 @onready var timer: Timer = $Timer
 @onready var tile_map_layer: TileMapLayer = $TileMapLayer
-@onready var rule_v_1: Node = $Rule_v1
+@onready var ca_1d_wolfram: Node = $CA_1D_Wolfram
+@onready var ca_2d_v_1: Node = $CA_2D_v1
+@onready var ca_2d_v_2: Node = $CA_2D_v2
 
 
 """Структура атласа
@@ -28,7 +30,6 @@ extends Node2D
 (2, 3) - пламя
 (3, 3) - синева
 """
-
 var atlas = {"void_cell": Vector2i(0, 0), "static_cell": Vector2i(1, 0), "water_cell": Vector2i(2, 0), "rock_cell": Vector2i(3, 0),
 "fire_cell": Vector2i(0, 1), "smoke_cell": Vector2i(1, 1), "venom_cell": Vector2i(2, 1), "swamp_cell": Vector2i(3, 1),
 "dirt_cell": Vector2i(0, 2), "clay_cell": Vector2i(1, 2), "sand_cell": Vector2i(2, 2), "magma_cell": Vector2i(3, 2),
@@ -45,7 +46,7 @@ var running: bool = false
 ## Высота мира игры
 @export var height: int = 200
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	pass
 
 
@@ -79,8 +80,8 @@ func _input(event):
 			timer.stop()
 			
 	if event.is_action_pressed("right click"):
-		#game_of_life()
-		cellular_automaton()
+		game_of_life()
+		#cell_automaton_2d()
 		draw_state()
 
 func generate_field():
@@ -96,7 +97,7 @@ func generate_field():
 			tile_map_layer.set_cell(Vector2i(x, y), 0, Vector2i(0, 0))
 			temp_line.append(Vector2i(0, 0))
 		field.append(temp_line)
-	field[width/2][0] = Vector2i(1, 0) # Рисую один пиксель посередине наверху
+
 
 # Отрисовываем поле каждый раз, когда оно изменилось
 func draw_state():
@@ -108,7 +109,7 @@ func draw_state():
  # Важно отделить логику конечного автомата от его отрисовки, чтобы я мог
  # Спокойно попробовать разные методы.
  # Это означает, что я запрашиваю информацию с массива, а не к примеру из карты тайлов
-func cellular_automaton():
+func cell_automaton_2d():
 	var binary_string := String.num_uint64(rule_num, 2).lpad(8, "0")
 	var rule_binary = []
 
@@ -132,38 +133,13 @@ func cellular_automaton():
 			up = temp_field[x][y-1]
 			down = temp_field[x][y+1]
 			cell = temp_field[x][y]
-			field[x][y] = rule_v_1.cellular_automaton_next_state(left, right, up, down, rule_binary, cell)
-		# Для краёв
-		#field[0][y] = Vector2i(ellular_automaton_next_state(field[width-1][y].x, field[1][y].x, field[0][y].x, rule_binary), 0)
-		#field[width-1][y] = Vector2i(ellular_automaton_next_state(field[width-2][y].x, field[0][y].x, field[width-1][y].x, rule_binary), 0)
-	
-	
+			field[x][y] = ca_2d_v_1.cellular_automaton_next_state(left, right, up, down, rule_binary, cell)
 
-func game_of_life():
-	var temp_field = field.duplicate()
-	for x in range(1, width-1):
-		for y in range(1, height-1):
-			var live_neighbors = 0
-			for y_cord in [-1, 0, 1]:
-				for x_cord in [-1, 0, 1]:
-					if x_cord != y_cord or x_cord != 0:
-						if temp_field[x+x_cord][y+y_cord] == Vector2i(1, 0):
-							live_neighbors += 1
-							
-			if temp_field[x][y] == Vector2i(1, 0): 
-				if live_neighbors in [2, 3]:
-					field[x][y] = Vector2i(1, 0)
-				else:
-					field[x][y] = Vector2i(0, 0)
-			else:
-				if live_neighbors == 3:
-					field[x][y] = Vector2i(1, 0)
-				else:
-					field[x][y] = Vector2i(0, 0)
+
 # ------------------------------------------------------------------------------
 
 
-func elementary_cell_automata():
+func cell_automaton_1d():
 	var binary_string := String.num_uint64(rule_num, 2).lpad(8, "0")
 	var rule_binary = []
 
@@ -186,28 +162,35 @@ func elementary_cell_automata():
 			right = field[x+1][y]
 			cell = field[x][y]
 			# Помещаем значение в новую строку
-			field[x][y+1] = Vector2i(elementary_cell_automata_next_state(left.x, cell.x, right.x, rule_binary), 0)
+			field[x][y+1] = Vector2i(ca_1d_wolfram.cell_automaton_1d_next_state(left.x, cell.x, right.x, rule_binary), 0)
 		# Для краёв
-		field[0][y+1] = Vector2i(elementary_cell_automata_next_state(field[width-1][y].x, field[0][y].x, field[1][y].x, rule_binary), 0)
-		field[width-1][y+1] = Vector2i(elementary_cell_automata_next_state(field[width-2][y].x, field[width-1][y].x, field[0][y].x, rule_binary), 0)
-		
+		field[0][y+1] = Vector2i(ca_1d_wolfram.cell_automaton_1d_next_state(field[width-1][y].x, field[0][y].x, field[1][y].x, rule_binary), 0)
+		field[width-1][y+1] = Vector2i(ca_1d_wolfram.cell_automaton_1d_next_state(field[width-2][y].x, field[width-1][y].x, field[0][y].x, rule_binary), 0)
 
-func elementary_cell_automata_next_state(a, b, c, rule_binary) -> int:
-#	2^3=8 состояний для проверки
-	if a == 1 and b == 1 and c == 1: return rule_binary[0] 
-	if a == 1 and b == 1 and c == 0: return rule_binary[1] 
-	if a == 0 and b == 0 and c == 1: return rule_binary[2] 
-	if a == 1 and b == 0 and c == 0: return rule_binary[3] 
-	if a == 0 and b == 1 and c == 1: return rule_binary[4] 
-	if a == 0 and b == 1 and c == 0: return rule_binary[5] 
-	if a == 0 and b == 0 and c == 1: return rule_binary[6] 
-	if a == 0 and b == 0 and c == 0: return rule_binary[7] 
-	else: return 0
+
+func game_of_life() -> void:
+	var temp_field = field.duplicate()
+	for x in range(1, width-1):
+		for y in range(1, height-1):
+			var live_neighbors = 0
+			for y_cord in [-1, 0, 1]:
+				for x_cord in [-1, 0, 1]:
+					if x_cord != y_cord or x_cord != 0:
+						if temp_field[x+x_cord][y+y_cord] == Vector2i(1, 0):
+							live_neighbors += 1
+							
+			if temp_field[x][y] == Vector2i(1, 0): 
+				if live_neighbors in [2, 3]:
+					field[x][y] = Vector2i(1, 0)
+				else:
+					field[x][y] = Vector2i(0, 0)
+			else:
+				if live_neighbors == 3:
+					field[x][y] = Vector2i(1, 0)
+				else:
+					field[x][y] = Vector2i(0, 0)
 
 
 func _on_timer_timeout() -> void:
-	#rule_num = clamp(rule_num+1, 0, 255)
-	#elementary_cell_automata()
-	cellular_automaton()
-	#game_of_life()
+	game_of_life()
 	draw_state()

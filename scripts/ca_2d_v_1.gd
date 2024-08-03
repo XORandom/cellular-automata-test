@@ -1,11 +1,13 @@
 extends Node
 
-
 func cellular_automaton_next_state(l, r, u, d, _rule_binary, c:=Vector2i(3, 0)) -> Vector2i:
 	"""
-	*u*
-	lcr
-	*d*
+	окрестность фон Неймана
+	- - -
+	  u  
+	l c r
+	  d  
+	- - -
 	(0, 0) - пустота
 	(1, 0) - статичная клетка
 	(2, 0) - вода
