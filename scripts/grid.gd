@@ -80,8 +80,8 @@ func _input(event):
 			timer.stop()
 			
 	if event.is_action_pressed("right click"):
-		game_of_life()
-		#cell_automaton_2d()
+		#game_of_life()
+		cell_automaton_2d()
 		draw_state()
 
 func generate_field():
